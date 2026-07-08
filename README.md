@@ -53,7 +53,7 @@ Use `IDKitIdentifiable` when your object exposes an `.identifier` property.
 Compatibility aliases are also exported:
 
 ```python
-from idkit import AppIdentifier, AppIdentifierLike, AppIdentifiable
+from idkit import IDKitIdentifier, IDKitIdentifierLike, IDKitIdentifiable
 ```
 
 ```python
