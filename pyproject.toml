@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "IDKit"
+version = "1.0.0"
+description = "A typed, dot-notation identifier system for Python 3.12+."
+requires-python = ">=3.12"
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Ryan Kohl" }
+]
+keywords = ["identifier", "typing", "enum", "dsl"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2.2",
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["idkit*"]
+
+[tool.setuptools.package-data]
+idkit = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
