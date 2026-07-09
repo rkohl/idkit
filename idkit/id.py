@@ -12,8 +12,9 @@ from .namespaces import (
     SourceNamespace,
 )
 
-
 type Identifier = Identity[GroupNamespace, SourceNamespace, RoleNamespace]
+
+IDSpace = IdentityNamespace[GroupNamespace, SourceNamespace, RoleNamespace]
 
 type OperationIdentifier = Identity[GroupNamespace, SourceNamespace, OperationNamespace]
 
@@ -40,11 +41,7 @@ and can be used as dictionary keys, registry identifiers,
 event topics, metric names, cache keys, and logging 
 namespaces.
 """
-ID: Identifier = IdentityNamespace(
-    group=GroupNamespace,
-    source=SourceNamespace,
-    role=RoleNamespace,
-)
+ID = IDSpace(group=GroupNamespace, source=SourceNamespace, role=RoleNamespace)
 
 
 __all__ = [

@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto
+
+from .namespace import Namespace
 
 
-class OperationNamespace(StrEnum):
+class OperationNamespace(Namespace):
     """
     An operation describes what is being performed.
 
@@ -50,7 +52,6 @@ class OperationNamespace(StrEnum):
     track = auto()
     scan = auto()
     search = auto()
-    index = auto()
     discover = auto()
     authenticate = auto()
     authorize = auto()
@@ -67,14 +68,14 @@ class OperationNamespace(StrEnum):
     route = auto()
 
 
-class Lifecycle(StrEnum):
+class Lifecycle(Namespace):
     create = auto()
     delete = auto()
     initialize = auto()
     destroy = auto()
 
 
-class CURD(StrEnum):
+class CURD(Namespace):
     read = auto()
     write = auto()
     update = auto()
@@ -83,7 +84,7 @@ class CURD(StrEnum):
     delete = auto()
 
 
-class Process(StrEnum):
+class Process(Namespace):
     analyze = auto()
     process = auto()
     transform = auto()
@@ -94,7 +95,7 @@ class Process(StrEnum):
     deserialize = auto()
 
 
-class Validation(StrEnum):
+class Validation(Namespace):
     validate = auto()
     verify = auto()
     authorize = auto()
@@ -102,7 +103,7 @@ class Validation(StrEnum):
     confirm = auto()
 
 
-class Communication(StrEnum):
+class Communication(Namespace):
     send = auto()
     receive = auto()
     publish = auto()
@@ -112,22 +113,20 @@ class Communication(StrEnum):
     post = auto()
 
 
-class Discovery(StrEnum):
+class Discovery(Namespace):
     discover = auto()
     scan = auto()
     search = auto()
-    index = auto()
-    find = auto()
 
 
-class Monitoring(StrEnum):
+class Monitoring(Namespace):
     monitor = auto()
     observe = auto()
     track = auto()
     watch = auto()
 
 
-class Execution(StrEnum):
+class Execution(Namespace):
     execute = auto()
     run = auto()
     invoke = auto()

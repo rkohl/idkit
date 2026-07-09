@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto
+
+from .namespace import Namespace
 
 
-class RoleNamespace(StrEnum):
+class RoleNamespace(Namespace):
     """
     A role describes what an identifier represents as a stable responsibility.
 

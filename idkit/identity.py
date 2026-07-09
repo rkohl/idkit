@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Iterator, Self
 
-from .namespaces import Namespace
+from .namespaces.namespace import Namespace
 
 
 @dataclass(frozen=True)
@@ -215,9 +215,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
 
     def unique(self, unique_id: str) -> Self:
         if self.role is None:
-            raise IdentifierValidationError(
-                "Cannot set unique id before role."
-            )
+            raise IdentifierValidationError("Cannot set unique id before role.")
 
         if self.unique_id is not None:
             raise IdentifierValidationError("Identifier already has a unique id.")
@@ -579,7 +577,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
         )
 
 
-class IdentityNamespace[G: Namespace, S: Namespace, R: Namespace]:
+class IdentityNamespace[GN: Namespace, SN: Namespace, RN: Namespace]:
     """
     Entry point for constructing strongly typed identities.
 
@@ -638,15 +636,15 @@ class IdentityNamespace[G: Namespace, S: Namespace, R: Namespace]:
     def __init__(
         self,
         *,
-        group: type[G],
-        source: type[S],
-        role: type[R],
+        group: type[GN],
+        source: type[SN],
+        role: type[RN],
     ):
         self.group = group
         self.source = source
         self.role = role
 
-    def __getattr__(self, name: str) -> Identity[G, S, R]:
+    def __getattr__(self, name: str) -> Identity[GN, SN, RN]:
         if name in self.group.__members__:
             return Identity(
                 group=self.group[name],
@@ -656,16 +654,13 @@ class IdentityNamespace[G: Namespace, S: Namespace, R: Namespace]:
 
         raise AttributeError(name)
 
-    def parse(self, value: str) -> Identity[G, S, R]:
+    def parse(self, value: str) -> Identity[GN, SN, RN]:
         return Identity.parse(
             value,
             group_enum=self.group,
             source_enum=self.source,
             role_enum=self.role,
         )
-
-
-IDSpace = IdentityNamespace
 
 
 class IdentifierError(Exception):

@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto
+
+from .namespace import Namespace
 
 
-class SourceNamespace(StrEnum):
+class SourceNamespace(Namespace):
     """
     The `Source` identifies the primary object, resource, or subsystem that the `identifier` represents (e.g., `runtime`, `data`, `workflow`).
 
@@ -128,7 +130,7 @@ class SourceNamespace(StrEnum):
     template = auto()
 
 
-class CoreObjects(StrEnum):
+class CoreObjects(Namespace):
     resource = auto()
     manager = auto()
     service = auto()
@@ -143,7 +145,7 @@ class CoreObjects(StrEnum):
     server = auto()
 
 
-class Data(StrEnum):
+class Data(Namespace):
     data = auto()
     dataset = auto()
     record = auto()
@@ -158,7 +160,7 @@ class Data(StrEnum):
     snapshot = auto()
 
 
-class Runtime(StrEnum):
+class Runtime(Namespace):
     runtime = auto()
     engine = auto()
     process = auto()
@@ -173,7 +175,7 @@ class Runtime(StrEnum):
     session = auto()
 
 
-class Configuration(StrEnum):
+class Configuration(Namespace):
     config = auto()
     setting = auto()
     option = auto()
@@ -184,7 +186,7 @@ class Configuration(StrEnum):
     environment = auto()
 
 
-class Integration(StrEnum):
+class Integration(Namespace):
     connector = auto()
     gateway = auto()
     bridge = auto()
@@ -195,7 +197,7 @@ class Integration(StrEnum):
     stream = auto()
 
 
-class AI(StrEnum):
+class AI(Namespace):
     agent = auto()
     tool = auto()
     prompt = auto()
@@ -207,7 +209,7 @@ class AI(StrEnum):
     conversation = auto()
 
 
-class Security(StrEnum):
+class Security(Namespace):
     identity = auto()
     credential = auto()
     token = auto()
@@ -219,7 +221,7 @@ class Security(StrEnum):
     secret = auto()
 
 
-class Web(StrEnum):
+class Web(Namespace):
     request = auto()
     response = auto()
     route = auto()

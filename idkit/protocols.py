@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .namespaces import Namespace
+from .namespaces.namespace import Namespace
 from typing import Any, Protocol, Self
 import uuid
 

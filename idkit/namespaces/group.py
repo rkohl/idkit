@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto
+
+from .namespace import Namespace
 
 
-class GroupNamespace(StrEnum):
+class GroupNamespace(Namespace):
     """
     The `Group` defines the primary classification or architectural domain of the `identifier` in the first segment. It represents the highest level of organization (e.g., `system`, `service`, `manage`).
 
@@ -12,6 +14,8 @@ class GroupNamespace(StrEnum):
     Component — Which part of it?
     Action — What does it do?
     """
+
+    # value: str
 
     system = auto()
     service = auto()
@@ -76,7 +80,7 @@ class GroupNamespace(StrEnum):
     script = auto()
 
 
-class Architecture(StrEnum):
+class Architecture(Namespace):
     system = auto()
     service = auto()
     core = auto()
@@ -90,7 +94,7 @@ class Architecture(StrEnum):
     runtime = auto()
 
 
-class Infrastructure(StrEnum):
+class Infrastructure(Namespace):
     database = auto()
     storage = auto()
     cache = auto()
@@ -104,7 +108,7 @@ class Infrastructure(StrEnum):
     container = auto()
 
 
-class Data(StrEnum):
+class Data(Namespace):
     source = auto()
     stream = auto()
     pipeline = auto()
@@ -113,7 +117,7 @@ class Data(StrEnum):
     reporting = auto()
 
 
-class Interface(StrEnum):
+class Interface(Namespace):
     api = auto()
     web = auto()
     cli = auto()
@@ -123,7 +127,7 @@ class Interface(StrEnum):
     ui = auto()
 
 
-class Business(StrEnum):
+class Business(Namespace):
     domain = auto()
     business = auto()
     user = auto()
@@ -134,7 +138,7 @@ class Business(StrEnum):
     workspace = auto()
 
 
-class Automation(StrEnum):
+class Automation(Namespace):
     workflow = auto()
     scheduler = auto()
     worker = auto()
@@ -147,7 +151,7 @@ class Automation(StrEnum):
     ai = auto()
 
 
-class Development(StrEnum):
+class Development(Namespace):
     testing = auto()
     development = auto()
     staging = auto()
