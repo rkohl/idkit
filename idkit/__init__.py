@@ -10,6 +10,11 @@ from .id import (
     OperationNamespace,
 )
 from .identity import Identity, IdentityNamespace
+from .identity import (
+    IdentifierError,
+    IdentifierParseError,
+    IdentifierValidationError,
+)
 from .protocols import IdentityLike, Identifiable
 
 

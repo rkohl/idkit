@@ -1,12 +1,12 @@
-from idkit.idkit import ID, IDKitIdentifier, IDKitIdentifierLike
+from idkit import ID, Identifier, IDLike
 
 
-def register(identifier: IDKitIdentifierLike) -> None:
+def register(identifier: IDLike) -> None:
     identifier.require_complete()
     print(f"Registering: {identifier.value}")
 
 
-identifier: IDKitIdentifier = ID.system.runtime.agent.analyzer
+identifier: Identifier = ID.system.runtime.agent.analyzer
 
 print(identifier)
 print(identifier.namespace)

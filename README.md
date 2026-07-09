@@ -44,23 +44,26 @@ manage::workflow-pipeline+runner
 ## Type aliases
 
 ```python
-from idkit import IDKitIdentifier, IDKitIdentifierLike, IDKitIdentifiable
+from idkit import Identifier, IDLike, IDable
 ```
 
-Use `IDKitIdentifier` when you want the concrete implementation.
+Use `Identifier` when you want the concrete identity type.
 
-Use `IDKitIdentifierLike` when your function only needs the public identifier interface.
+Use `IDLike` when your function only needs the public identity interface.
 
-Use `IDKitIdentifiable` when your object exposes an `.identifier` property.
+Use `IDable` when your object exposes an `.identifier` property.
 
-Compatibility aliases are also exported:
+The root package also exports the generic building blocks:
 
 ```python
-from idkit import IDKitIdentifier, IDKitIdentifierLike, IDKitIdentifiable
+from idkit import Identity, IdentityLike, Identifiable, IdentityNamespace
 ```
 
 ```python
-def register(identifier: IDKitIdentifierLike) -> None:
+from idkit import IDLike
+
+
+def register(identifier: IDLike) -> None:
     identifier.require_complete()
     print(identifier.value)
 ```

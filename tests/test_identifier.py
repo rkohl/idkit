@@ -1,8 +1,24 @@
 import pytest
 
 import idkit
-from idkit.id import ID
-from idkit.exceptions import IdentifierParseError, IdentifierValidationError
+from idkit import (
+    ID,
+    GroupNamespace,
+    IDLike,
+    IDable,
+    Identifiable,
+    Identifier,
+    IdentifierError,
+    IdentifierParseError,
+    IdentifierValidationError,
+    Identity,
+    IdentityLike,
+    IdentityNamespace,
+    OperationIdentifier,
+    OperationNamespace,
+    RoleNamespace,
+    SourceNamespace,
+)
 
 
 def test_identifier_value():
@@ -27,7 +43,9 @@ def test_parse_group_only():
 
     assert parsed == ID.system
     assert parsed.source is None
+    assert parsed.component is None
     assert parsed.role is None
+    assert parsed.segment is parsed.group
 
 
 def test_matches():
@@ -106,6 +124,38 @@ def test_identifier_segment_falls_back_to_previous_segment():
     assert ID.system.segment is ID.system.group
 
 
+@pytest.mark.parametrize(
+    ("identifier", "expected_segment", "expected_namespace", "expected_value"),
+    [
+        (ID.system, "system", "system", "system"),
+        (ID.system.runtime, "runtime", "system::runtime", "system::runtime"),
+        (
+            ID.system.runtime.agent,
+            "agent",
+            "system::runtime-agent",
+            "system::runtime-agent",
+        ),
+        (
+            ID.system.runtime.agent.analyzer,
+            "analyzer",
+            "system::runtime-agent",
+            "system::runtime-agent+analyzer",
+        ),
+    ],
+)
+def test_partial_identities_serialize_with_segment_fallback(
+    identifier: Identifier,
+    expected_segment: str,
+    expected_namespace: str,
+    expected_value: str,
+):
+    assert identifier.segment.value == expected_segment
+    assert identifier.namespace == expected_namespace
+    assert identifier.qualified == expected_value
+    assert identifier.value == expected_value
+    assert identifier.to_dict()["segment"] == expected_segment
+
+
 def test_matches_string_identifier():
     identifier = ID.system.runtime.agent.analyzer
 
@@ -157,35 +207,46 @@ def test_parse_rejects_invalid_values():
 
 
 def test_enum_group():
-    from idkit import GroupNamespace
-
     assert GroupNamespace.account == "account"
 
 
 def test_enum_source():
-    from idkit import SourceNamespace
-
     assert SourceNamespace.knowledge == "knowledge"
 
 
 def test_enum_role():
-    from idkit import RoleNamespace
-
     assert RoleNamespace.orchestrator == "orchestrator"
 
 
 def test_enum_operation():
-    from idkit import OperationNamespace
-
     assert OperationNamespace.execute == "execute"
 
 
-def test_package_root_exports_documented_aliases():
-    assert hasattr(idkit, "AppIdentifier")
-    assert hasattr(idkit, "AppIdentifierRoot")
-    assert hasattr(idkit, "AppIdentifierLike")
-    assert hasattr(idkit, "AppIdentifiable")
-    assert hasattr(idkit, "IDKitIdentifier")
-    assert hasattr(idkit, "IDKitIdentifierRoot")
-    assert hasattr(idkit, "IDKitIdentifierLike")
-    assert hasattr(idkit, "IDKitIdentifiable")
+def test_package_root_exports_current_public_api():
+    assert idkit.ID is ID
+    assert idkit.Identifier is Identifier
+    assert idkit.OperationIdentifier is OperationIdentifier
+    assert idkit.IDLike is IDLike
+    assert idkit.IDable is IDable
+    assert idkit.Identity is Identity
+    assert idkit.IdentityNamespace is IdentityNamespace
+    assert idkit.IdentityLike is IdentityLike
+    assert idkit.Identifiable is Identifiable
+    assert idkit.IdentifierError is IdentifierError
+    assert idkit.IdentifierParseError is IdentifierParseError
+    assert idkit.IdentifierValidationError is IdentifierValidationError
+
+
+def test_package_root_all_matches_exported_names():
+    for name in idkit.__all__:
+        assert hasattr(idkit, name), name
+
+
+def test_identity_like_consumer_can_use_segment_without_optional_unwrap():
+    def current_segment(identifier: IDLike) -> str:
+        return identifier.segment.value
+
+    assert current_segment(ID.system.runtime.agent.analyzer) == "analyzer"
+    assert current_segment(ID.system.runtime.agent) == "agent"
+    assert current_segment(ID.system.runtime) == "runtime"
+    assert current_segment(ID.system) == "system"
