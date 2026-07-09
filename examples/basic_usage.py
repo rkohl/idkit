@@ -18,10 +18,10 @@ print(identifier.to_dict())
 
 register(identifier)
 
-parsed = ID.parse("system::runtime-agent+analyzer")
+parsed = ID.parse("system::runtime:agent-analyzer")
 
 assert parsed == identifier
-assert parsed == "system::runtime-agent+analyzer"
+assert parsed == "system::runtime:agent-analyzer"
 
 assert identifier.matches(ID.system)
 assert identifier.matches(ID.system.runtime)

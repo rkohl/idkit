@@ -10,10 +10,10 @@ from idkit import ID
 identifier = ID.system.runtime.agent.analyzer
 
 print(identifier)
-# system::runtime-agent+analyzer
+# system::runtime:agent-analyzer
 
 print(identifier.namespace)
-# system::runtime-agent
+# system::runtime:agent
 
 print(identifier.segment)
 # analyzer
@@ -23,22 +23,27 @@ print(identifier.path)
 
 print(identifier.slug)
 # system-runtime-agent-analyzer
+
+print(identifier.unique("worker-1"))
+# system::runtime:agent-analyzer<worker-1>
 ```
 
 ## Format
 
 ```text
-Group::Source[-Component][+Role]
+Group::Source[:Component][-Role][<Unique>]
 ```
 
 Examples:
 
 ```text
 system::runtime
-system::runtime-agent
-system::runtime-agent+analyzer
-service::data-resource+ingester
-manage::workflow-pipeline+runner
+system::runtime
+system::runtime:agent
+system::runtime:agent-analyzer
+system::runtime:agent-analyzer<worker-1>
+service::data:resource-ingester
+manage::workflow:pipeline-runner
 ```
 
 ## Type aliases
@@ -77,9 +82,13 @@ pip install idkit
 ## Parsing
 
 ```python
-parsed = ID.parse("system::runtime-agent+analyzer")
+parsed = ID.parse("system::runtime:agent-analyzer")
 
 assert parsed == ID.system.runtime.agent.analyzer
+
+unique = ID.parse("system::runtime:agent-analyzer<worker-1>")
+
+assert unique == ID.system.runtime.agent.analyzer.unique("worker-1")
 ```
 
 ## Matching
@@ -106,7 +115,7 @@ identifier.matches(ID.service)
 identifier = ID.system.runtime.agent.analyzer
 
 identifier.parent
-# Identifier('system::runtime-agent')
+# Identifier('system::runtime:agent')
 
 identifier.parent.parent
 # Identifier('system::runtime')

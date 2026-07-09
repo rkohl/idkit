@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .namespaces import Namespace
 from typing import Any, Protocol, Self
+import uuid
 
 
 class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
@@ -26,12 +27,12 @@ class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
         - Preserve type safety across custom enum sets.
 
     Format:
-        Group::Source[-Component][+Role]
+        Group::Source[:Component][-Role][<Unique>]
 
     Examples:
-        system::runtime-agent+analyzer
-        service::data-resource+ingester
-        manage::workflow-pipeline+runner
+        system::runtime:agent-analyzer
+        service::data:resource-ingester
+        manage::workflow:pipeline-runner
 
     Use cases:
         - Service registries
@@ -62,7 +63,10 @@ class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
     def role(self) -> RN | None: ...
 
     @property
-    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None]: ...
+    def unique_id(self) -> str | None: ...
+
+    @property
+    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None, str | None]: ...
 
     @property
     def string_parts(self) -> tuple[str, ...]: ...
@@ -109,6 +113,9 @@ class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
     @property
     def is_complete(self) -> bool: ...
 
+    @property
+    def has_unique_id(self) -> bool: ...
+
     def require_source(self) -> Self: ...
 
     def require_role(self) -> Self: ...
@@ -116,6 +123,8 @@ class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
     def require_action(self) -> Self: ...
 
     def require_complete(self) -> Self: ...
+
+    def unique(self, unique_id: str | float | uuid.UUID) -> Self: ...
 
     def to_dict(self) -> dict[str, Any]: ...
 

@@ -23,19 +23,43 @@ from idkit import (
 
 def test_identifier_value():
     identifier = ID.system.runtime.agent.analyzer
-    assert str(identifier) == "system::runtime-agent+analyzer"
-    assert identifier.value == "system::runtime-agent+analyzer"
+    assert str(identifier) == "system::runtime:agent-analyzer"
+    assert identifier.value == "system::runtime:agent-analyzer"
+
+
+def test_unique_identifier_value():
+    identifier = ID.workflow.manager.data.adapter.unique("Index")
+
+    assert str(identifier) == "workflow::manager:data-adapter<Index>"
+    assert identifier.value == "workflow::manager:data-adapter<Index>"
+    assert identifier.unique_id == "Index"
+    assert identifier.has_unique_id is True
 
 
 def test_namespace():
     identifier = ID.system.runtime.agent.analyzer
-    assert identifier.namespace == "system::runtime-agent"
+    assert identifier.namespace == "system::runtime:agent"
 
 
 def test_parse():
     identifier = ID.system.runtime.agent.analyzer
-    parsed = ID.parse("system::runtime-agent+analyzer")
+    parsed = ID.parse("system::runtime:agent-analyzer")
     assert parsed == identifier
+
+
+def test_parse_unique_identifier():
+    parsed = ID.parse("workflow::manager:data-adapter<Index>")
+
+    assert parsed == ID.workflow.manager.data.adapter.unique("Index")
+    assert parsed.matches("workflow::manager:data-adapter")
+
+
+def test_parse_role_without_component():
+    parsed = ID.parse("system::runtime-analyzer")
+
+    assert parsed == ID.system.runtime.analyzer
+    assert parsed.component is None
+    assert parsed.role is RoleNamespace.analyzer
 
 
 def test_parse_group_only():
@@ -59,7 +83,7 @@ def test_matches():
 
 def test_parent():
     identifier = ID.system.runtime.agent.analyzer
-    assert str(identifier.parent) == "system::runtime-agent"
+    assert str(identifier.parent) == "system::runtime:agent"
     assert str(identifier.parent.parent) == "system::runtime"
     assert str(identifier.parent.parent.parent) == "system"
 
@@ -68,7 +92,7 @@ def test_parents_returns_full_hierarchy():
     identifier = ID.system.runtime.agent.analyzer
 
     assert tuple(str(parent) for parent in identifier.parents) == (
-        "system::runtime-agent",
+        "system::runtime:agent",
         "system::runtime",
         "system",
     )
@@ -82,13 +106,14 @@ def test_identifier_properties():
         identifier.source,
         identifier.component,
         identifier.role,
+        None,
     )
     assert identifier.segment is identifier.role
     assert identifier.string_parts == ("system", "runtime", "agent", "analyzer")
     assert identifier.path == "system/runtime/agent/analyzer"
     assert identifier.slug == "system-runtime-agent-analyzer"
     assert identifier.metric_key == "system.runtime.agent.analyzer"
-    assert identifier.cache_key == "system::runtime-agent+analyzer"
+    assert identifier.cache_key == "system::runtime:agent-analyzer"
     assert identifier.event_topic == "system/runtime/agent/analyzer"
     assert identifier.has_role is True
     assert identifier.has_action is True
@@ -102,15 +127,37 @@ def test_identifier_to_dict():
         "source": "runtime",
         "component": "agent",
         "role": "analyzer",
+        "unique_id": None,
         "segment": "analyzer",
-        "namespace": "system::runtime-agent",
-        "qualified": "system::runtime-agent+analyzer",
+        "namespace": "system::runtime:agent",
+        "qualified": "system::runtime:agent-analyzer",
         "path": "system/runtime/agent/analyzer",
         "slug": "system-runtime-agent-analyzer",
         "metric_key": "system.runtime.agent.analyzer",
-        "cache_key": "system::runtime-agent+analyzer",
+        "cache_key": "system::runtime:agent-analyzer",
         "event_topic": "system/runtime/agent/analyzer",
-        "value": "system::runtime-agent+analyzer",
+        "value": "system::runtime:agent-analyzer",
+    }
+
+
+def test_unique_identifier_to_dict():
+    identifier = ID.workflow.manager.data.adapter.unique("Index")
+
+    assert identifier.to_dict() == {
+        "group": "workflow",
+        "source": "manager",
+        "component": "data",
+        "role": "adapter",
+        "unique_id": "Index",
+        "segment": "adapter",
+        "namespace": "workflow::manager:data",
+        "qualified": "workflow::manager:data-adapter<Index>",
+        "path": "workflow/manager/data/adapter",
+        "slug": "workflow-manager-data-adapter",
+        "metric_key": "workflow.manager.data.adapter",
+        "cache_key": "workflow::manager:data-adapter<Index>",
+        "event_topic": "workflow/manager/data/adapter",
+        "value": "workflow::manager:data-adapter<Index>",
     }
 
 
@@ -132,14 +179,14 @@ def test_identifier_segment_falls_back_to_previous_segment():
         (
             ID.system.runtime.agent,
             "agent",
-            "system::runtime-agent",
-            "system::runtime-agent",
+            "system::runtime:agent",
+            "system::runtime:agent",
         ),
         (
             ID.system.runtime.agent.analyzer,
             "analyzer",
-            "system::runtime-agent",
-            "system::runtime-agent+analyzer",
+            "system::runtime:agent",
+            "system::runtime:agent-analyzer",
         ),
     ],
 )
@@ -159,10 +206,18 @@ def test_partial_identities_serialize_with_segment_fallback(
 def test_matches_string_identifier():
     identifier = ID.system.runtime.agent.analyzer
 
-    assert identifier.matches("system::runtime-agent")
-    assert identifier.matches("system::runtime-agent+analyzer")
-    assert not identifier.matches("service::runtime-agent+analyzer")
+    assert identifier.matches("system::runtime:agent")
+    assert identifier.matches("system::runtime:agent-analyzer")
+    assert not identifier.matches("service::runtime:agent-analyzer")
     assert not identifier.matches("not-an-identifier")
+
+
+def test_unique_identifier_match_requires_unique_when_requested():
+    identifier = ID.workflow.manager.data.adapter.unique("Index")
+
+    assert identifier.matches("workflow::manager:data-adapter")
+    assert identifier.matches("workflow::manager:data-adapter<Index>")
+    assert not identifier.matches("workflow::manager:data-adapter<Other>")
 
 
 def test_require_complete_raises_for_incomplete_identifier():
@@ -184,6 +239,22 @@ def test_duplicate_role_raises_validation_error():
         ID.system.runtime.agent.analyzer.runner
 
 
+def test_unique_requires_role():
+    with pytest.raises(
+        IdentifierValidationError,
+        match="Cannot set unique id before role",
+    ):
+        ID.workflow.manager.data.unique("Index")
+
+
+def test_duplicate_unique_raises_validation_error():
+    with pytest.raises(
+        IdentifierValidationError,
+        match="already has a unique id",
+    ):
+        ID.workflow.manager.data.adapter.unique("Index").unique("Other")
+
+
 def test_component_without_source_raises_validation_error():
     with pytest.raises(
         IdentifierValidationError,
@@ -197,13 +268,19 @@ def test_parse_rejects_invalid_values():
         ID.parse("")
 
     with pytest.raises(IdentifierParseError, match="Invalid group 'invalid'"):
-        ID.parse("invalid::runtime-agent+analyzer")
+        ID.parse("invalid::runtime:agent-analyzer")
 
     with pytest.raises(IdentifierParseError, match="Invalid source 'invalid'"):
-        ID.parse("system::invalid-agent+analyzer")
+        ID.parse("system::invalid:agent-analyzer")
 
     with pytest.raises(IdentifierParseError, match="Invalid role 'invalid'"):
-        ID.parse("system::runtime-agent+invalid")
+        ID.parse("system::runtime:agent-invalid")
+
+    with pytest.raises(IdentifierParseError, match="Unique id cannot be empty"):
+        ID.parse("system::runtime:agent-analyzer<>")
+
+    with pytest.raises(IdentifierParseError, match="Invalid role 'agent\\+analyzer'"):
+        ID.parse("system::runtime-agent+analyzer")
 
 
 def test_enum_group():

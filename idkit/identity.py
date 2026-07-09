@@ -15,7 +15,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
     An `Identity` provides a strongly typed, structured representation of an
     object's identity using the following format:
 
-        Group::Source[-Component][+Role]
+        Group::Source[:Component][-Role][<Unique>]
 
     Unlike ordinary strings, an `Identity` preserves the semantic meaning of
     each segment while providing utilities for parsing, validation,
@@ -26,7 +26,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
     keys, and logging namespaces.
 
     Format:
-        Group::Source[-Component][+Role]
+        Group::Source[:Component][-Role][<Unique>]
 
     Components:
         Group
@@ -46,12 +46,12 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
 
     Examples:
         system::runtime
-        system::runtime-agent
-        system::runtime-agent+analyzer
+        system::runtime:agent
+        system::runtime:agent-analyzer
 
-        service::data-resource+ingester
+        service::data:resource-ingester
 
-        manage::workflow-pipeline+runner
+        manage::workflow:pipeline-runner
 
     Construction:
         Identities are normally created through an `IdentityNamespace`
@@ -97,6 +97,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
     source: SN | None = None
     component: SN | None = None
     role: RN | None = None
+    unique_id: str | None = None
 
     source_enum: type[SN] | None = field(default=None, repr=False, compare=False)
     role_enum: type[RN] | None = field(default=None, repr=False, compare=False)
@@ -106,6 +107,15 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             raise IdentifierValidationError(
                 "Identifier cannot have a component without a source."
             )
+
+        if self.unique_id is not None:
+            if self.role is None:
+                raise IdentifierValidationError(
+                    "Identifier cannot have a unique id without a role."
+                )
+
+            if not self.unique_id:
+                raise IdentifierValidationError("Identifier unique id cannot be empty.")
 
     def __getattr__(self, name: str) -> Identity[GN, SN, RN]:
         if self.source_enum and name in self.source_enum.__members__:
@@ -137,6 +147,10 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
     def is_complete(self) -> bool:
         return self.source is not None and self.role is not None
 
+    @property
+    def has_unique_id(self) -> bool:
+        return self.unique_id is not None
+
     def require_source(self) -> Self:
         if self.source is None:
             raise IdentifierValidationError("Identifier requires a source.")
@@ -164,6 +178,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=source,
             component=self.component,
             role=self.role,
+            unique_id=self.unique_id,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -180,6 +195,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=self.source,
             component=component,
             role=self.role,
+            unique_id=self.unique_id,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -193,6 +209,25 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=self.source,
             component=self.component,
             role=role,
+            source_enum=self.source_enum,
+            role_enum=self.role_enum,
+        )
+
+    def unique(self, unique_id: str) -> Self:
+        if self.role is None:
+            raise IdentifierValidationError(
+                "Cannot set unique id before role."
+            )
+
+        if self.unique_id is not None:
+            raise IdentifierValidationError("Identifier already has a unique id.")
+
+        return type(self)(
+            group=self.group,
+            source=self.source,
+            component=self.component,
+            role=self.role,
+            unique_id=unique_id,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -214,6 +249,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=self.source,
             component=self.component,
             role=None,
+            unique_id=None,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -224,6 +260,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=self.source,
             component=None,
             role=self.role,
+            unique_id=self.unique_id,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -234,6 +271,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=None,
             component=None,
             role=self.role,
+            unique_id=self.unique_id,
             source_enum=self.source_enum,
             role_enum=self.role_enum,
         )
@@ -298,11 +336,14 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
         if other.role is not None and self.role != other.role:
             return False
 
+        if other.unique_id is not None and self.unique_id != other.unique_id:
+            return False
+
         return True
 
     @property
-    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None]:
-        return self.group, self.source, self.component, self.role
+    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None, str | None]:
+        return self.group, self.source, self.component, self.role, self.unique_id
 
     @property
     def string_parts(self) -> tuple[str, ...]:
@@ -328,16 +369,21 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
         value = f"{self.group.value}::{self.source.value}"
 
         if self.component is not None:
-            value += f"-{self.component.value}"
+            value += f":{self.component.value}"
 
         return value
 
     @property
     def qualified(self) -> str:
-        if self.role is None:
-            return self.namespace
+        value = self.namespace
 
-        return f"{self.namespace}+{self.role.value}"
+        if self.role is not None:
+            value = f"{value}-{self.role.value}"
+
+        if self.unique_id is not None:
+            value = f"{value}<{self.unique_id}>"
+
+        return value
 
     @property
     def value(self) -> str:
@@ -369,6 +415,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             "source": self.source.value if self.source else None,
             "component": self.component.value if self.component else None,
             "role": self.role.value if self.role else None,
+            "unique_id": self.unique_id,
             "segment": self.segment.value,
             "namespace": self.namespace,
             "qualified": self.qualified,
@@ -440,14 +487,14 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
                 )
             except ValueError as exc:
                 raise IdentifierParseError(
-                    f"Invalid identifier '{value}'. Expected format: Group::Source[-Component][+role]."
+                    f"Invalid identifier '{value}'. Expected format: Group::Source[:Component][-Role][<Unique>]."
                 ) from exc
 
         try:
             group_part, rest = value.split("::", 1)
         except ValueError as exc:
             raise IdentifierParseError(
-                f"Invalid identifier '{value}'. Expected format: Group::Source[-Component][+role]."
+                f"Invalid identifier '{value}'. Expected format: Group::Source[:Component][-Role][<Unique>]."
             ) from exc
 
         if not group_part:
@@ -461,10 +508,25 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
         if not rest:
             raise IdentifierParseError("Source cannot be empty.")
 
+        parsed_unique_id: str | None = None
+
+        if "<" in rest or ">" in rest:
+            if rest.count("<") != 1 or rest.count(">") != 1 or not rest.endswith(">"):
+                raise IdentifierParseError(
+                    f"Invalid identifier '{value}'. Expected format: Group::Source[:Component][-Role][<Unique>]."
+                )
+
+            rest, unique_part = rest[:-1].split("<", 1)
+
+            if not unique_part:
+                raise IdentifierParseError("Unique id cannot be empty.")
+
+            parsed_unique_id = unique_part
+
         parsed_role: RN | None = None
 
-        if "+" in rest:
-            rest, role_part = rest.split("+", 1)
+        if "-" in rest:
+            rest, role_part = rest.split("-", 1)
 
             if not role_part:
                 raise IdentifierParseError("role cannot be empty.")
@@ -479,8 +541,8 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
 
         parsed_component: SN | None = None
 
-        if "-" in rest:
-            source_part, component_part = rest.split("-", 1)
+        if ":" in rest:
+            source_part, component_part = rest.split(":", 1)
 
             if not source_part:
                 raise IdentifierParseError("Source cannot be empty.")
@@ -511,6 +573,7 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
             source=parsed_source,
             component=parsed_component,
             role=parsed_role,
+            unique_id=parsed_unique_id,
             source_enum=source_enum,
             role_enum=role_enum,
         )
@@ -529,17 +592,17 @@ class IdentityNamespace[G: Namespace, S: Namespace, R: Namespace]:
     project.
 
     Format:
-        Group::Source[-Component][+Role]
+        Group::Source[:Component][-Role][<Unique>]
 
     Example:
         ID.system.runtime.agent.analyzer
-        # system::runtime-agent+analyzer
+        # system::runtime:agent-analyzer
 
         ID.service.data.resource.ingester
-        # service::data-resource+ingester
+        # service::data:resource-ingester
 
         ID.manage.workflow.pipeline.runner
-        # manage::workflow-pipeline+runner
+        # manage::workflow:pipeline-runner
 
     Purpose:
         - Serves as the namespace for all identities.

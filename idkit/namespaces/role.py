@@ -13,8 +13,8 @@ class RoleNamespace(StrEnum):
         publisher
 
     Best used in identifiers:
-        system::runtime-agent+analyzer
-        service::data-resource+ingester
+        system::runtime:agent-analyzer
+        service::data:resource-ingester
     """
 
     saver = auto()
@@ -83,3 +83,6 @@ class RoleNamespace(StrEnum):
     proxy = auto()
     bridge = auto()
     session = auto()
+
+    def unique(self, uniqueIDNamespace: str) -> str:
+        return uniqueIDNamespace
