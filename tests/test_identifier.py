@@ -1,7 +1,7 @@
 import pytest
 
 import idkit
-from idkit.idkit import ID
+from idkit.id import ID
 from idkit.exceptions import IdentifierParseError, IdentifierValidationError
 
 
@@ -65,6 +65,7 @@ def test_identifier_properties():
         identifier.component,
         identifier.role,
     )
+    assert identifier.segment is identifier.role
     assert identifier.string_parts == ("system", "runtime", "agent", "analyzer")
     assert identifier.path == "system/runtime/agent/analyzer"
     assert identifier.slug == "system-runtime-agent-analyzer"
@@ -83,6 +84,7 @@ def test_identifier_to_dict():
         "source": "runtime",
         "component": "agent",
         "role": "analyzer",
+        "segment": "analyzer",
         "namespace": "system::runtime-agent",
         "qualified": "system::runtime-agent+analyzer",
         "path": "system/runtime/agent/analyzer",
@@ -92,6 +94,16 @@ def test_identifier_to_dict():
         "event_topic": "system/runtime/agent/analyzer",
         "value": "system::runtime-agent+analyzer",
     }
+
+
+def test_identifier_segment_falls_back_to_previous_segment():
+    assert (
+        ID.system.runtime.agent.analyzer.segment
+        is ID.system.runtime.agent.analyzer.role
+    )
+    assert ID.system.runtime.agent.segment is ID.system.runtime.agent.component
+    assert ID.system.runtime.segment is ID.system.runtime.source
+    assert ID.system.segment is ID.system.group
 
 
 def test_matches_string_identifier():
@@ -145,27 +157,27 @@ def test_parse_rejects_invalid_values():
 
 
 def test_enum_group():
-    from idkit import IdentifierGroup
+    from idkit import GroupNamespace
 
-    assert IdentifierGroup.account == "account"
+    assert GroupNamespace.account == "account"
 
 
 def test_enum_source():
-    from idkit import IdentifierSource
+    from idkit import SourceNamespace
 
-    assert IdentifierSource.knowledge == "knowledge"
+    assert SourceNamespace.knowledge == "knowledge"
 
 
 def test_enum_role():
-    from idkit import IdentifierRole
+    from idkit import RoleNamespace
 
-    assert IdentifierRole.orchestrator == "orchestrator"
+    assert RoleNamespace.orchestrator == "orchestrator"
 
 
 def test_enum_operation():
-    from idkit import IdentifierOperation
+    from idkit import OperationNamespace
 
-    assert IdentifierOperation.execute == "execute"
+    assert OperationNamespace.execute == "execute"
 
 
 def test_package_root_exports_documented_aliases():

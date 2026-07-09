@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 
-class IdentifierOperation(StrEnum):
+class OperationNamespace(StrEnum):
     """
     An operation describes what is being performed.
 

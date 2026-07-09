@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 
-class IdentifierRole(StrEnum):
+class RoleNamespace(StrEnum):
     """
     A role describes what an identifier represents as a stable responsibility.
 

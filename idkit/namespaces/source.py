@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 
-class IdentifierSource(StrEnum):
+class SourceNamespace(StrEnum):
     """
     The `Source` identifies the primary object, resource, or subsystem that the `identifier` represents (e.g., `runtime`, `data`, `workflow`).
 

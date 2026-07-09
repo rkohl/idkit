@@ -15,6 +15,9 @@ print(identifier)
 print(identifier.namespace)
 # system::runtime-agent
 
+print(identifier.segment)
+# analyzer
+
 print(identifier.path)
 # system/runtime/agent/analyzer
 

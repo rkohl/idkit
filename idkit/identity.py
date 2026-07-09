@@ -4,35 +4,102 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Iterator, Self
 
-from .exceptions import IdentifierParseError, IdentifierValidationError
+from .namespaces import Namespace
 
 
 @dataclass(frozen=True)
-class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
+class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
     """
-    Immutable typed identifier value.
+    Represents the immutable identity of an architectural component.
 
-    The identifier format is:
+    An `Identity` provides a strongly typed, structured representation of an
+    object's identity using the following format:
 
-        Group::Source[-Component][+role]
+        Group::Source[-Component][+Role]
 
-    The same source enum is used for both the required ``Source`` segment and
-    the optional ``Component`` segment. Instances support fluent construction
-    through attribute access when created from an ``IdentifierRoot``.
+    Unlike ordinary strings, an `Identity` preserves the semantic meaning of
+    each segment while providing utilities for parsing, validation,
+    serialization, comparison, hierarchy traversal, and namespace matching.
+
+    Identities are immutable, hashable, comparable, and suitable for use as
+    dictionary keys, registry identifiers, event topics, metric names, cache
+    keys, and logging namespaces.
+
+    Format:
+        Group::Source[-Component][+Role]
+
+    Components:
+        Group
+            The architectural domain or category to which the identity belongs.
+
+        Source
+            The primary object, resource, or subsystem represented by the
+            identity.
+
+        Component
+            An optional specialization of the source representing a specific
+            implementation or subcomponent.
+
+        Role
+            An optional stable responsibility or architectural role associated
+            with the identity.
 
     Examples:
         system::runtime
         system::runtime-agent
         system::runtime-agent+analyzer
+
+        service::data-resource+ingester
+
+        manage::workflow-pipeline+runner
+
+    Construction:
+        Identities are normally created through an `IdentityNamespace`
+        using fluent dot notation.
+
+        Example:
+            identity = ID.system.runtime.agent.analyzer
+
+    Features:
+        - Immutable and hashable.
+        - Strongly typed through namespace enums.
+        - Supports fluent construction.
+        - String serialization and parsing.
+        - Hierarchical parent traversal.
+        - Prefix namespace matching.
+        - Dictionary and JSON serialization.
+        - Suitable for registry, dependency injection, logging, metrics,
+          configuration, routing, and discovery systems.
+
+    Design Notes:
+        An `Identity` describes what an object *is*, not what it is currently
+        doing.
+
+        Runtime behavior should be represented separately using an
+        `IdentifierOperation`.
+
+        Example:
+            identity = ID.service.data.resource.ingester
+            operation = IdentifierOperation.ingest
+
+    See Also:
+        IdentityNamespace
+            Entry point used to construct identities.
+
+        IdentityLike
+            Structural protocol implemented by identity-like objects.
+
+        Identifiable
+            Structural protocol for objects exposing an `identity` property.
     """
 
-    group: G
-    source: S | None = None
-    component: S | None = None
-    role: R | None = None
+    group: GN
+    source: SN | None = None
+    component: SN | None = None
+    role: RN | None = None
 
-    source_enum: type[S] | None = field(default=None, repr=False, compare=False)
-    role_enum: type[R] | None = field(default=None, repr=False, compare=False)
+    source_enum: type[SN] | None = field(default=None, repr=False, compare=False)
+    role_enum: type[RN] | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if self.component is not None and self.source is None:
@@ -40,7 +107,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
                 "Identifier cannot have a component without a source."
             )
 
-    def __getattr__(self, name: str) -> Identifier[G, S, R]:
+    def __getattr__(self, name: str) -> Identity[GN, SN, RN]:
         if self.source_enum and name in self.source_enum.__members__:
             if self.source is None or self.component is None:
                 return self.with_source_or_component(self.source_enum[name])
@@ -88,7 +155,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         self.require_role()
         return self
 
-    def with_source(self, source: S) -> Self:
+    def with_source(self, source: SN) -> Self:
         if self.source is not None:
             raise IdentifierValidationError("Identifier already has a source.")
 
@@ -101,7 +168,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             role_enum=self.role_enum,
         )
 
-    def with_component(self, component: S) -> Self:
+    def with_component(self, component: SN) -> Self:
         if self.source is None:
             raise IdentifierValidationError("Cannot set component before source.")
 
@@ -117,7 +184,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             role_enum=self.role_enum,
         )
 
-    def with_role(self, role: R) -> Self:
+    def with_role(self, role: RN) -> Self:
         if self.role is not None:
             raise IdentifierValidationError("Identifier already has an role.")
 
@@ -130,7 +197,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             role_enum=self.role_enum,
         )
 
-    def with_source_or_component(self, source: S) -> Self:
+    def with_source_or_component(self, source: SN) -> Self:
         if self.source is None:
             return self.with_source(source)
 
@@ -199,7 +266,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
 
         return tuple(items)
 
-    def matches(self, other: Identifier[G, S, R] | str) -> bool:
+    def matches(self, other: Identity[GN, SN, RN] | str) -> bool:
         """
         Prefix-style hierarchy match.
 
@@ -234,7 +301,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         return True
 
     @property
-    def parts(self) -> tuple[G, S | None, S | None, R | None]:
+    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None]:
         return self.group, self.source, self.component, self.role
 
     @property
@@ -244,6 +311,14 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             for part in (self.group, self.source, self.component, self.role)
             if part is not None
         )
+
+    @property
+    def segment(self) -> GN | SN | RN:
+        for part in (self.role, self.component, self.source, self.group):
+            if part is not None:
+                return part
+
+        raise IdentifierValidationError("Identifier requires at least a group.")
 
     @property
     def namespace(self) -> str:
@@ -294,6 +369,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             "source": self.source.value if self.source else None,
             "component": self.component.value if self.component else None,
             "role": self.role.value if self.role else None,
+            "segment": self.segment.value,
             "namespace": self.namespace,
             "qualified": self.qualified,
             "path": self.path,
@@ -323,7 +399,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         return f"Identifier('{self.value}')"
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, Identifier):
+        if isinstance(other, Identity):
             return self.parts == other.parts
 
         if isinstance(other, str):
@@ -332,7 +408,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         return NotImplemented
 
     def __lt__(self, other: object) -> bool:
-        if isinstance(other, Identifier):
+        if isinstance(other, Identity):
             return self.value < other.value
 
         if isinstance(other, str):
@@ -348,10 +424,10 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         cls,
         value: str,
         *,
-        group_enum: type[G],
-        source_enum: type[S],
-        role_enum: type[R],
-    ) -> Identifier[G, S, R]:
+        group_enum: type[GN],
+        source_enum: type[SN],
+        role_enum: type[RN],
+    ) -> Identity[GN, SN, RN]:
         if not value:
             raise IdentifierParseError("Identifier cannot be empty.")
 
@@ -385,7 +461,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         if not rest:
             raise IdentifierParseError("Source cannot be empty.")
 
-        parsed_role: R | None = None
+        parsed_role: RN | None = None
 
         if "+" in rest:
             rest, role_part = rest.split("+", 1)
@@ -401,7 +477,7 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
         if not rest:
             raise IdentifierParseError("Source cannot be empty.")
 
-        parsed_component: S | None = None
+        parsed_component: SN | None = None
 
         if "-" in rest:
             source_part, component_part = rest.split("-", 1)
@@ -438,3 +514,104 @@ class Identifier[G: StrEnum, S: StrEnum, R: StrEnum]:
             source_enum=source_enum,
             role_enum=role_enum,
         )
+
+
+class IdentityNamespace[G: Namespace, S: Namespace, R: Namespace]:
+    """
+    Entry point for constructing strongly typed identities.
+
+    `IdentityNamespace` provides the fluent, dot-notation interface used to build
+    immutable `Identity` instances from the configured group, source, and role
+    enumerations.
+
+    Rather than constructing identities manually, applications should create a
+    single root instance and use it as the canonical factory throughout the
+    project.
+
+    Format:
+        Group::Source[-Component][+Role]
+
+    Example:
+        ID.system.runtime.agent.analyzer
+        # system::runtime-agent+analyzer
+
+        ID.service.data.resource.ingester
+        # service::data-resource+ingester
+
+        ID.manage.workflow.pipeline.runner
+        # manage::workflow-pipeline+runner
+
+    Purpose:
+        - Serves as the namespace for all identities.
+        - Enforces the configured enum types for groups, sources, and roles.
+        - Provides a fluent, discoverable API through dot notation.
+        - Eliminates manual string construction.
+        - Creates immutable, strongly typed `Identity` objects.
+        - Provides parsing of serialized identities back into objects.
+
+    Use cases:
+        - Creating identities for framework components.
+        - Registering services and plugins.
+        - Dependency injection.
+        - Event routing.
+        - Logging and metrics.
+        - Configuration lookup.
+        - Cache keys.
+        - Service discovery.
+
+    Design:
+        A project will typically expose a single shared instance:
+
+            ID = IdentityRoot(
+                group_enum=IdentifierGroup,
+                source_enum=IdentifierSource,
+                role_enum=IdentifierRole,
+            )
+
+        This instance acts as the root of the project's identity hierarchy and
+        should be reused throughout the application.
+    """
+
+    def __init__(
+        self,
+        *,
+        group: type[G],
+        source: type[S],
+        role: type[R],
+    ):
+        self.group = group
+        self.source = source
+        self.role = role
+
+    def __getattr__(self, name: str) -> Identity[G, S, R]:
+        if name in self.group.__members__:
+            return Identity(
+                group=self.group[name],
+                source_enum=self.source,
+                role_enum=self.role,
+            )
+
+        raise AttributeError(name)
+
+    def parse(self, value: str) -> Identity[G, S, R]:
+        return Identity.parse(
+            value,
+            group_enum=self.group,
+            source_enum=self.source,
+            role_enum=self.role,
+        )
+
+
+IDSpace = IdentityNamespace
+
+
+class IdentifierError(Exception):
+    """Base identifier exception."""
+
+
+class IdentifierParseError(IdentifierError, ValueError):
+    """Raised when an identifier cannot be parsed."""
+
+
+class IdentifierValidationError(IdentifierError, ValueError):
+    """Raised when an identifier fails validation."""

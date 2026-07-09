@@ -1,4 +1,4 @@
-from idkit import ID, IDKitIdentifier, IDKitIdentifierLike
+from idkit.idkit import ID, IDKitIdentifier, IDKitIdentifierLike
 
 
 def register(identifier: IDKitIdentifierLike) -> None:
@@ -10,6 +10,7 @@ identifier: IDKitIdentifier = ID.system.runtime.agent.analyzer
 
 print(identifier)
 print(identifier.namespace)
+print(identifier.segment)
 print(identifier.path)
 print(identifier.slug)
 print(identifier.metric_key)

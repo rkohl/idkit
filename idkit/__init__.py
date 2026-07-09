@@ -1,49 +1,31 @@
-from .exceptions import (
-    IdentifierError,
-    IdentifierParseError,
-    IdentifierValidationError,
-)
-
-from .idkit import (
+from .id import (
     ID,
-    AppIdentifiable,
-    AppIdentifier,
-    AppIdentifierLike,
-    AppIdentifierRoot,
-    IDKitIdentifiable,
-    IDKitIdentifier,
-    IDKitIdentifierLike,
-    IDKitIdentifierRoot,
-    IDKitOperationIdentifier,
-    IdentifierGroup,
-    IdentifierSource,
-    IdentifierRole,
-    IdentifierOperation,
+    Identifier,
+    OperationIdentifier,
+    IDLike,
+    IDable,
+    GroupNamespace,
+    SourceNamespace,
+    RoleNamespace,
+    OperationNamespace,
 )
-from .identifier import Identifier
-from .protocols import SupportsIdentifier, Identifiable
-from .root import IdentifierRoot, IDRoot
+from .identity import Identity, IdentityNamespace
+from .protocols import IdentityLike, Identifiable
 
 
 __all__ = [
     "ID",
-    "AppIdentifier",
-    "AppIdentifierRoot",
-    "AppIdentifierLike",
-    "AppIdentifiable",
-    "IdentifierGroup",
-    "IdentifierSource",
-    "IdentifierRole",
-    "IdentifierOperation",
     "Identifier",
-    "IdentifierRoot",
-    "IDRoot",
-    "IDKitIdentifier",
-    "IDKitOperationIdentifier",
-    "IDKitIdentifierRoot",
-    "IDKitIdentifierLike",
-    "IDKitIdentifiable",
-    "SupportsIdentifier",
+    "OperationIdentifier",
+    "IDLike",
+    "IDable",
+    "GroupNamespace",
+    "SourceNamespace",
+    "RoleNamespace",
+    "OperationNamespace",
+    "Identity",
+    "IdentityNamespace",
+    "IdentityLike",
     "Identifiable",
     "IdentifierError",
     "IdentifierParseError",

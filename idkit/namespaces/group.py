@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 
-class IdentifierGroup(StrEnum):
+class GroupNamespace(StrEnum):
     """
     The `Group` defines the primary classification or architectural domain of the `identifier` in the first segment. It represents the highest level of organization (e.g., `system`, `service`, `manage`).
 

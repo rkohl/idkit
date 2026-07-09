@@ -1,33 +1,74 @@
 from __future__ import annotations
 
-from enum import StrEnum
+from .namespaces import Namespace
 from typing import Any, Protocol, Self
 
 
-class SupportsIdentifier[G: StrEnum, S: StrEnum, R: StrEnum](Protocol):
-    """Structural interface implemented by identifier-like values.
+class IdentityLike[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
+    """
+    Structural protocol for identifier-like objects.
 
-    Use this protocol when a function only needs the public identifier API and
-    should accept either ``Identifier`` instances or compatible implementations.
+    `Identities` describes the public interface required for an object
+    to behave like an identifier, without requiring it to inherit from the
+    concrete `Identifier` class.
+
+    Use this protocol when a function, service, registry, logger, event bus,
+    or configuration system only needs to read or validate an identifier.
+
+    This allows different identifier implementations to be used interchangeably
+    as long as they expose the same public API.
+
+    Purpose:
+        - Accept any object that behaves like an identifier.
+        - Avoid coupling APIs to the concrete `Identifier` implementation.
+        - Enable flexible testing, mocking, wrapping, or alternate identifier
+          implementations.
+        - Preserve type safety across custom enum sets.
+
+    Format:
+        Group::Source[-Component][+Role]
+
+    Examples:
+        system::runtime-agent+analyzer
+        service::data-resource+ingester
+        manage::workflow-pipeline+runner
+
+    Use cases:
+        - Service registries
+        - Dependency injection containers
+        - Event topic routing
+        - Logging and metrics keys
+        - Cache keys
+        - Configuration lookup
+        - Permission or policy matching
+        - Testing with lightweight mock identifiers
+
+    Example:
+        def register(identifier: Identities[Group, Source, Role]) -> None:
+            identifier.require_complete()
+            registry[identifier.value] = identifier
     """
 
     @property
-    def group(self) -> G: ...
+    def group(self) -> GN: ...
 
     @property
-    def source(self) -> S | None: ...
+    def source(self) -> SN | None: ...
 
     @property
-    def component(self) -> S | None: ...
+    def component(self) -> SN | None: ...
 
     @property
-    def role(self) -> R | None: ...
+    def role(self) -> RN | None: ...
 
     @property
-    def parts(self) -> tuple[G, S | None, S | None, R | None]: ...
+    def parts(self) -> tuple[GN, SN | None, SN | None, RN | None]: ...
 
     @property
     def string_parts(self) -> tuple[str, ...]: ...
+
+    @property
+    def segment(self) -> GN | SN | RN: ...
 
     @property
     def namespace(self) -> str: ...
@@ -79,8 +120,52 @@ class SupportsIdentifier[G: StrEnum, S: StrEnum, R: StrEnum](Protocol):
     def to_dict(self) -> dict[str, Any]: ...
 
 
-class Identifiable[G: StrEnum, S: StrEnum, R: StrEnum](Protocol):
-    """Structural interface for objects that expose an ``identifier`` property."""
+class Identifiable[GN: Namespace, SN: Namespace, RN: Namespace](Protocol):
+    """
+    Structural protocol for objects that expose an identifier.
+
+    `Identifiable` describes any object that can be identified by a stable,
+    structured identifier through an `identifier` property.
+
+    Use this protocol when you want to operate on application objects directly
+    instead of passing identifiers around separately.
+
+    An identifiable object may be a service, manager, controller, task,
+    workflow, pipeline, repository, handler, plugin, module, or any other
+    framework object that has a stable architectural identity.
+
+    Purpose:
+        - Establish a consistent identity contract across framework objects.
+        - Allow registries, containers, event systems, and loggers to work with
+          objects directly.
+        - Keep identity attached to the object it represents.
+        - Avoid duplicating identifier arguments throughout APIs.
+        - Enable generic discovery and registration patterns.
+
+    Example:
+        class RuntimeAnalyzer:
+            @property
+            def identifier(self) -> AppIdentifier:
+                return ID.system.runtime.agent.analyzer
+
+        def register(item: Identifiable[Group, Source, Role]) -> None:
+            registry[item.identifier] = item
+
+    Common use cases:
+        - Registering services by identity.
+        - Routing events to identifiable handlers.
+        - Creating logger names from object identity.
+        - Mapping metrics to identifiable components.
+        - Resolving dependencies from a container.
+        - Discovering plugins, jobs, workflows, or tasks.
+        - Grouping framework objects by namespace or parent identity.
+
+    Design note:
+        `Identifiable` should usually expose a stable, immutable identifier.
+        For framework classes, the identifier is often best defined as a class
+        attribute or read-only property because it represents what the object is,
+        not mutable runtime state.
+    """
 
     @property
-    def identifier(self) -> SupportsIdentifier[G, S, R]: ...
+    def identifier(self) -> IdentityLike[GN, SN, RN]: ...
