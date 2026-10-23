@@ -85,6 +85,8 @@ class RoleNamespace(Namespace):
     proxy = auto()
     bridge = auto()
     session = auto()
+    manager = auto()
+    service = auto()
 
     def unique(self, uniqueIDNamespace: str) -> str:
         return uniqueIDNamespace

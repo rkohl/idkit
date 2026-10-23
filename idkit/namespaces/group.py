@@ -40,6 +40,7 @@ class GroupNamespace(Namespace):
     host = auto()
     container = auto()
     source = auto()
+    resource = auto()
     stream = auto()
     pipeline = auto()
     warehouse = auto()

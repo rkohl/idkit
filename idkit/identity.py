@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Iterator, Self
+from typing import Any, Self
 
 from .namespaces.namespace import Namespace
 
@@ -385,19 +386,53 @@ class Identity[GN: Namespace, SN: Namespace, RN: Namespace]:
 
     @property
     def value(self) -> str:
+        """
+        Return the value representation of the identifier, which is its qualified form.
+
+        Example:
+            identifier.value -> "group::source:component-role<unique_id>"
+        """
         return self.qualified
 
     @property
     def path(self) -> str:
+        """
+        Return the path representation of the identifier, joining its string parts with slashes.
+
+        Example:
+            identifier.path -> "group/source/component/role"
+        """
         return "/".join(self.string_parts)
 
     @property
     def slug(self) -> str:
+        """
+        Return the slug representation of the identifier, joining its string parts with hyphens.
+
+        Example:
+            identifier.slug -> "group-source-component-role"
+        """
         return "-".join(self.string_parts)
 
     @property
     def metric_key(self) -> str:
+        """
+        Return the metric key representation of the identifier, joining its string parts with dots.
+
+        Example:
+            identifier.metric_key -> "group.source.component.role"
+        """
         return ".".join(self.string_parts)
+
+    @property
+    def fullname(self) -> str:
+        """
+        Return the full name representation of the identifier, joining its string parts with spaces and capitalizing each word.
+
+        Example:
+            identifier.fullname -> "Group Source Component Role"
+        """
+        return " ".join(self.string_parts).title()
 
     @property
     def cache_key(self) -> str:
