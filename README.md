@@ -26,6 +26,9 @@ print(identifier.slug)
 
 print(identifier.unique("worker-1"))
 # system::runtime:agent-analyzer<worker-1>
+
+print(identifier.fullname)
+# System Runtime Agent Analyzer
 ```
 
 ## Format
